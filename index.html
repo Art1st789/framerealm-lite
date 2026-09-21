@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="帧境 Lite">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a0a">
+<title>帧境 Lite · 焦段堪景</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+body{background:#0a0a0a;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;user-select:none;-webkit-user-select:none;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;border:none;background:none;color:inherit;cursor:pointer}
+select{font-family:inherit}
+
+#app{height:100vh;height:100dvh;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+
+.viewport{flex:1;position:relative;overflow:hidden;background:#000}
+.videobox{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);overflow:hidden;background:#000}
+.videobox video,.videobox img.src{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+
+.frame{position:absolute;box-shadow:0 0 0 9999px rgba(0,0,0,.68);border:1px solid rgba(255,255,255,.5);pointer-events:none;z-index:3}
+.frame .c{position:absolute;width:18px;height:18px;border:2.5px solid #f59e0b}
+.frame .tl{top:-2px;left:-2px;border-right:none;border-bottom:none;border-radius:3px 0 0 0}
+.frame .tr{top:-2px;right:-2px;border-left:none;border-bottom:none;border-radius:0 3px 0 0}
+.frame .bl{bottom:-2px;left:-2px;border-right:none;border-top:none;border-radius:0 0 0 3px}
+.frame .br{bottom:-2px;right:-2px;border-left:none;border-top:none;border-radius:0 0 3px 0}
+.frame .tag{position:absolute;top:-23px;left:-1px;font-size:11px;font-variant-numeric:tabular-nums;color:#f59e0b;background:rgba(0,0,0,.75);padding:2px 7px;border-radius:4px;white-space:nowrap;font-weight:700}
+
+.guides{position:absolute;inset:0;pointer-events:none}
+.gl{position:absolute;background:rgba(255,255,255,.42);display:none}
+.gl.v{top:0;bottom:0;width:1px}
+.gl.h{left:0;right:0;height:1px}
+.guides.thirds .v1{left:33.333%;display:block}
+.guides.thirds .v2{left:66.667%;display:block}
+.guides.thirds .h1{top:33.333%;display:block}
+.guides.thirds .h2{top:66.667%;display:block}
+.guides.golden .v1{left:38.2%;display:block}
+.guides.golden .v2{left:61.8%;display:block}
+.guides.golden .h1{top:38.2%;display:block}
+.guides.golden .h2{top:61.8%;display:block}
+.guides.center .v1{left:50%;display:block}
+.guides.center .h1{top:50%;display:block}
+
+.hud{position:absolute;top:10px;right:10px;z-index:6;pointer-events:none}
+.infobar{position:absolute;bottom:12px;left:10px;right:10px;display:flex;justify-content:center;align-items:center;gap:6px;z-index:6;pointer-events:none;flex-wrap:wrap}
+.chip{background:rgba(0,0,0,.62);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.11);border-radius:8px;padding:5px 10px;font-size:11px;line-height:1.55;font-variant-numeric:tabular-nums;color:#eee}
+.chip b{color:#f59e0b;font-weight:700}
+.chip .dim{color:#999}
+.warnchip{position:absolute;bottom:56px;left:50%;transform:translateX(-50%);z-index:7;background:rgba(170,60,20,.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,160,110,.3);border-radius:8px;padding:6px 12px;font-size:11px;color:#ffe6d8;white-space:nowrap;pointer-events:none}
+.rotatechip{position:absolute;bottom:56px;left:50%;transform:translateX(-50%);z-index:7;background:rgba(0,0,0,.62);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:8px;padding:6px 12px;font-size:11px;color:#aaa;white-space:nowrap;pointer-events:none}
+
+.controls{background:#0f0f0f;border-top:1px solid #1e1e1e;padding:8px 12px 12px;flex-shrink:0}
+
+.focal-bar{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none}
+.focal-bar::-webkit-scrollbar{display:none}
+.focal-bar.locked{opacity:.42;pointer-events:none}
+.fbtn{flex:0 0 auto;padding:7px 13px;border-radius:9px;background:#1a1a1a;border:1px solid #262626;color:#bbb;font-size:13px;font-variant-numeric:tabular-nums;transition:all .13s;font-weight:500}
+.fbtn.active{background:#f59e0b;border-color:#f59e0b;color:#0a0a0a;font-weight:700}
+
+.opt-bar{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none}
+.opt-bar::-webkit-scrollbar{display:none}
+.opt{flex:1 0 auto;display:flex;flex-direction:column;gap:3px;min-width:0}
+.opt label{font-size:9px;color:#666;letter-spacing:.1em;padding-left:2px}
+.opt select{width:100%;background:#1a1a1a;border:1px solid #262626;color:#ddd;font-size:12px;padding:7px 22px 7px 8px;border-radius:8px;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23888'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center}
+
+.action-bar{display:flex;align-items:center;justify-content:space-between;padding:4px 2px 0}
+.ico{width:46px;height:46px;border-radius:11px;background:#1a1a1a;border:1px solid #262626;display:flex;align-items:center;justify-content:center;transition:background .13s,transform .1s;flex-shrink:0}
+.ico:active{background:#262626;transform:scale(.94)}
+.ico svg{width:21px;height:21px;stroke:#ccc;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ico.on{border-color:#f59e0b}
+.ico.on svg{stroke:#f59e0b}
+
+.shutter{width:62px;height:62px;border-radius:50%;background:#fff;box-shadow:0 0 0 3px #0f0f0f,0 0 0 4.5px #444;transition:transform .1s;flex-shrink:0}
+.shutter:active{transform:scale(.9)}
+
+.sheet{position:absolute;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);z-index:20;display:flex;align-items:flex-end;animation:fadein .18s}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.sheet-inner{background:#141414;border-radius:18px 18px 0 0;width:100%;padding:20px 20px calc(24px + env(safe-area-inset-bottom));border-top:1px solid #262626}
+.sheet-inner h3{font-size:15px;font-weight:600;margin-bottom:12px}
+.row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #1e1e1e;font-size:13px;color:#ddd;gap:12px}
+.row:last-of-type{border-bottom:none}
+.row .val{color:#f59e0b;font-variant-numeric:tabular-nums;font-weight:700;min-width:44px;text-align:right}
+.row input[type=range]{width:120px;accent-color:#f59e0b}
+.note{color:#888;font-size:11.5px;line-height:1.75;padding:14px 0 0}
+.btn-block{width:100%;margin-top:14px;padding:13px;border-radius:11px;background:#1e1e1e;border:1px solid #2a2a2a;font-size:14px;color:#ddd}
+.btn-block.primary{background:#f59e0b;color:#0a0a0a;font-weight:700;border-color:#f59e0b}
+
+.result{position:absolute;inset:0;background:rgba(0,0,0,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);z-index:25;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px}
+.result img{max-width:100%;max-height:62vh;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.6)}
+.result .rh{font-size:12px;color:#999;text-align:center;line-height:1.7}
+.result .rb{display:flex;gap:10px;width:100%;max-width:320px}
+.result .rb button{flex:1;padding:12px;border-radius:10px;font-size:13px;background:#1e1e1e;border:1px solid #2a2a2a;color:#ddd}
+.result .rb button.p{background:#f59e0b;color:#0a0a0a;border-color:#f59e0b;font-weight:700}
+
+.errorbox{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px;text-align:center;z-index:10;background:#0a0a0a}
+.errorbox h2{font-size:16px;font-weight:600}
+.errorbox p{font-size:12.5px;color:#999;line-height:1.75;max-width:290px}
+.errorbox button{padding:12px 22px;border-radius:10px;background:#f59e0b;color:#0a0a0a;font-weight:700;font-size:13px}
+.errorbox .sec{background:#1a1a1a;color:#ddd;border:1px solid #2a2a2a;font-weight:500}
+
+[hidden]{display:none !important}
+
+@media (orientation:landscape) and (max-height:560px){
+  #app{flex-direction:row;padding-top:0;padding-bottom:0;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+  .viewport{flex:1;height:100%}
+  .controls{width:196px;height:100%;flex-direction:column;justify-content:center;border-top:none;border-left:1px solid #1e1e1e;padding:10px 12px;overflow-y:auto;scrollbar-width:none}
+  .controls::-webkit-scrollbar{display:none}
+  .focal-bar{flex-wrap:wrap;overflow:visible}
+  .fbtn{padding:6px 10px;font-size:12px}
+  .opt-bar{flex-direction:column;gap:8px;overflow:visible}
+  .action-bar{padding-top:12px}
+  .shutter{width:54px;height:54px}
+  .infobar{gap:5px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="viewport" id="stage">
+    <div class="videobox" id="videobox">
+      <video id="video" playsinline autoplay muted></video>
+      <img class="src" id="photo" hidden alt="">
+      <div class="frame" id="frame">
+        <span class="c tl"></span><span class="c tr"></span><span class="c bl"></span><span class="c br"></span>
+        <span class="tag" id="frameTag">50mm</span>
+        <div class="guides" id="guides">
+          <i class="gl v v1"></i><i class="gl v v2"></i><i class="gl h h1"></i><i class="gl h h2"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="hud">
+      <div class="chip">
+        <span class="dim">画面占比</span> <b id="hudPct">52%</b>
+      </div>
+    </div>
+
+    <div class="infobar">
+      <div class="chip"><b id="hudFocal">50mm</b> <span class="dim">等效</span> <span id="hudEq">50mm</span></div>
+      <div class="chip" id="hudFormat">全画幅</div>
+      <div class="chip" id="hudRatio">3:2</div>
+    </div>
+
+    <div class="warnchip" id="warnHint" hidden></div>
+    <div class="rotatechip" id="rotateHint">横屏使用视野更完整</div>
+
+    <div class="errorbox" id="errorBox" hidden>
+      <h2 id="errTitle">需要摄像头权限</h2>
+      <p id="errMsg">帧境 Lite 需要摄像头来模拟取景。</p>
+      <button onclick="startCamera()">重试</button>
+      <button class="sec" onclick="openPicker()">改为上传照片模拟</button>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="focal-bar" id="focalBar"></div>
+
+    <div class="opt-bar">
+      <div class="opt">
+        <label>画幅</label>
+        <select id="selFormat">
+          <option value="ff">全画幅 36mm</option>
+          <option value="apsc">APS-C</option>
+          <option value="m43">M4/3</option>
+          <option value="mf">中画幅 44×33</option>
+          <option value="s35">Super 35</option>
+          <option value="in1">1 英寸</option>
+          <option value="f135">胶片 135</option>
+          <option value="half">半格胶片</option>
+          <option value="konica">柯尼卡 C35EF</option>
+        </select>
+      </div>
+      <div class="opt">
+        <label>宽高比</label>
+        <select id="selRatio">
+          <option value="1.5">3:2 横</option>
+          <option value="1.3333">4:3 横</option>
+          <option value="1.7778">16:9 横</option>
+          <option value="2.39">2.39:1 宽幕</option>
+          <option value="1">1:1 方</option>
+          <option value="0.6667">2:3 竖</option>
+          <option value="0.8">4:5 竖</option>
+          <option value="0.5625">9:16 竖</option>
+        </select>
+      </div>
+      <div class="opt">
+        <label>辅助线</label>
+        <select id="selGuide">
+          <option value="none">关闭</option>
+          <option value="thirds">三分法</option>
+          <option value="golden">黄金分割</option>
+          <option value="center">中心十字</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="action-bar">
+      <button class="ico" onclick="openPicker()" title="上传照片">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="8.8" cy="9.2" r="1.6"/><path d="M21 15.5l-4.6-4.3L6.5 21"/></svg>
+      </button>
+
+      <button class="shutter" onclick="capture()" title="拍摄"></button>
+
+      <button class="ico" id="btnLive" onclick="toggleLive()" title="暂停/恢复">
+        <svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M5 8h14"/><path d="M5 16h14"/></svg>
+      </button>
+
+      <button class="ico" onclick="openSheet()" title="设置">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1v.3a2 2 0 11-4 0v-.2a1.6 1.6 0 00-2.8-1.1l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 003.5 15a2 2 0 010-4h.2a1.6 1.6 0 001.1-2.8l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 0010.4 4.3V4a2 2 0 114 0v.2a1.6 1.6 0 002.8 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 001.1 2.7h.3a2 2 0 010 4h-.2z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="sheet" id="sheet" hidden onclick="if(event.target===this)closeSheet()">
+    <div class="sheet-inner">
+      <h3>设置</h3>
+      <div class="row">
+        <span>手机主摄等效焦距</span>
+        <span style="display:flex;align-items:center;gap:8px">
+          <input type="range" id="rngPhone" min="13" max="35" step="1">
+          <span class="val" id="valPhone">26mm</span>
+        </span>
+      </div>
+      <div class="row">
+        <span>裁切画质提示</span>
+        <button class="ico on" id="btnWarn" style="width:auto;padding:6px 12px;font-size:12px;color:#f59e0b">开启</button>
+      </div>
+      <div class="row">
+        <span>前置 / 后置镜头</span>
+        <button class="ico" id="btnFlip" style="width:auto;padding:6px 12px;font-size:12px;color:#ddd">后置</button>
+      </div>
+      <p class="note">主摄等效焦距决定模拟精度:iPhone 主摄通常为 24–26mm,超广角约 13mm。目标焦距越接近主摄、裁切越少、画质越好。若目标焦距小于主摄,说明需要更广的镜头。</p>
+      <button class="btn-block primary" onclick="closeSheet()">完成</button>
+    </div>
+  </div>
+
+  <div class="result" id="result" hidden>
+    <img id="resultImg" alt="取景结果">
+    <div class="rh" id="resultInfo"></div>
+    <div class="rb">
+      <button onclick="closeResult()">关闭</button>
+      <button class="p" onclick="saveAgain()">保存到相册</button>
+    </div>
+  </div>
+
+  <input type="file" id="filePicker" accept="image/*" hidden>
+</div>
+
+<script>
+"use strict";
+
+const FORMATS = {
+  ff:     { label:"全画幅",       w:36,    note:"36×24"  },
+  apsc:   { label:"APS-C",       w:23.6,  note:"1.5x"   },
+  m43:    { label:"M4/3",        w:17.3,  note:"2.0x"   },
+  mf:     { label:"中画幅",       w:44,    note:"44×33"  },
+  s35:    { label:"Super 35",    w:24.89, note:"1.39x"  },
+  in1:    { label:"1 英寸",       w:13.2,  note:"2.7x"   },
+  f135:   { label:"胶片 135",     w:36,    note:"36×24"  },
+  half:   { label:"半格胶片",     w:18,    note:"18×24"  },
+  konica: { label:"柯尼卡 C35EF", w:36,    note:"38mm", fixedFocal:38 },
+};
+
+const FOCALS = [20, 24, 28, 35, 40, 50, 70, 85, 100, 135];
+
+const state = {
+  focal: 50,
+  format: "ff",
+  ratio: 1.5,
+  phoneFocal: 26,
+  guide: "none",
+  facing: "environment",
+  mode: "camera",
+  warnOn: true,
+  live: true,
+  lastBlobUrl: null,
+};
+
+const $ = (id) => document.getElementById(id);
+const videoEl = $("video");
+const photoEl = $("photo");
+const stageEl = $("stage");
+const boxEl = $("videobox");
+const frameEl = $("frame");
+const guidesEl = $("guides");
+let stream = null;
+
+function effectiveFocal() {
+  const fmt = FORMATS[state.format];
+  return { focal: fmt.fixedFocal || state.focal, fmt };
+}
+
+function buildFocalBar() {
+  const bar = $("focalBar");
+  bar.innerHTML = "";
+  FOCALS.forEach((f) => {
+    const b = document.createElement("button");
+    b.className = "fbtn" + (f === state.focal ? " active" : "");
+    b.textContent = f + "mm";
+    b.dataset.focal = String(f);
+    b.onclick = () => {
+      state.focal = f;
+      document.querySelectorAll(".fbtn").forEach((x) =>
+        x.classList.toggle("active", Number(x.dataset.focal) === f)
+      );
+      update();
+    };
+    bar.appendChild(b);
+  });
+}
+
+function syncFocalBar() {
+  const fmt = FORMATS[state.format];
+  const locked = !!fmt.fixedFocal;
+  $("focalBar").classList.toggle("locked", locked);
+  document.querySelectorAll(".fbtn").forEach((x) =>
+    x.classList.toggle("active", !locked && Number(x.dataset.focal) === state.focal)
+  );
+}
+
+function sourceSize() {
+  if (state.mode === "camera") return [videoEl.videoWidth, videoEl.videoHeight];
+  return [photoEl.naturalWidth, photoEl.naturalHeight];
+}
+
+function layoutBox() {
+  const W = stageEl.clientWidth;
+  const H = stageEl.clientHeight;
+  const [sw, sh] = sourceSize();
+  if (!W || !H || !sw || !sh) return false;
+  const srcAR = sw / sh;
+  let bw, bh;
+  if (W / H > srcAR) {
+    bh = H;
+    bw = H * srcAR;
+  } else {
+    bw = W;
+    bh = W / srcAR;
+  }
+  boxEl.style.width = Math.round(bw) + "px";
+  boxEl.style.height = Math.round(bh) + "px";
+  return true;
+}
+
+function ratioLabel() {
+  const v = state.ratio;
+  const map = [
+    [1.5, "3:2"], [1.3333, "4:3"], [1.7778, "16:9"], [2.39, "2.39:1"],
+    [1, "1:1"], [0.6667, "2:3"], [0.8, "4:5"], [0.5625, "9:16"],
+  ];
+  for (const [k, label] of map) if (Math.abs(v - k) < 0.005) return label;
+  return String(v);
+}
+
+function update() {
+  if (!layoutBox()) return;
+  const W = boxEl.clientWidth;
+  const H = boxEl.clientHeight;
+  const { focal, fmt } = effectiveFocal();
+  const ar = state.ratio;
+
+  const ideal = W * ((fmt.w * state.phoneFocal) / (36 * focal));
+  let pw = ideal;
+  let ph = pw / ar;
+
+  const tooWide = pw > W + 1 || ph > H + 1;
+  const k = Math.min(1, W / pw, H / ph);
+  pw *= k;
+  ph *= k;
+
+  frameEl.style.left = (W - pw) / 2 + "px";
+  frameEl.style.top = (H - ph) / 2 + "px";
+  frameEl.style.width = pw + "px";
+  frameEl.style.height = ph + "px";
+
+  const eq = Math.round((36 / fmt.w) * focal * 10) / 10;
+  const pct = Math.round((pw / W) * 1000) / 10;
+
+  $("hudFocal").textContent = focal + "mm";
+  $("hudFormat").textContent = fmt.label;
+  $("hudEq").textContent = eq + "mm";
+  $("hudRatio").textContent = ratioLabel();
+  $("hudPct").textContent = pct + "%";
+  $("frameTag").textContent = focal + "mm · " + ratioLabel();
+
+  const warn = $("warnHint");
+  if (tooWide) {
+    warn.hidden = false;
+    warn.textContent = "超出主摄视野 · 需要更广的镜头";
+  } else if (state.warnOn && pct < 22) {
+    warn.hidden = false;
+    warn.textContent = "裁切至 " + pct + "% · 画质会明显下降";
+  } else {
+    warn.hidden = true;
+  }
+
+  const rot = $("rotateHint");
+  rot.hidden = !(window.innerHeight > window.innerWidth && !tooWide && pct < 60);
+}
+
+function renderGuides() {
+  guidesEl.className = "guides" + (state.guide === "none" ? "" : " " + state.guide);
+}
+
+async function startCamera() {
+  $("errorBox").hidden = true;
+  stopStream();
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showError({ name: "NotSupportedError" });
+    return;
+  }
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: {
+        facingMode: { ideal: state.facing },
+        width: { ideal: 1920 },
+        height: { ideal: 1440 },
+      },
+    });
+    videoEl.srcObject = stream;
+    await videoEl.play();
+    videoEl.hidden = false;
+    photoEl.hidden = true;
+    state.mode = "camera";
+    requestAnimationFrame(update);
+  } catch (err) {
+    showError(err);
+  }
+}
+
+function stopStream() {
+  if (stream) {
+    stream.getTracks().forEach((t) => t.stop());
+    stream = null;
+  }
+}
+
+function showError(err) {
+  const name = (err && err.name) || "";
+  let title = "无法启动摄像头";
+  let msg = "浏览器未能访问摄像头。";
+  if (name === "NotAllowedError") {
+    title = "摄像头权限被拒绝";
+    msg = "请在地址栏的权限设置中允许摄像头访问,然后重试。";
+  } else if (name === "NotFoundError") {
+    title = "未找到摄像头";
+    msg = "当前设备没有可用摄像头,可改为上传照片模拟取景。";
+  } else if (name === "NotSupportedError") {
+    title = "当前环境不支持摄像头";
+    msg = "需通过 HTTPS 链接在 Safari 中打开,或改为上传照片模拟取景。";
+  }
+  $("errTitle").textContent = title;
+  $("errMsg").textContent = msg;
+  $("errorBox").hidden = false;
+  videoEl.hidden = true;
+}
+
+function toggleLive() {
+  if (state.mode !== "camera") return;
+  state.live = !state.live;
+  $("btnLive").classList.toggle("on", !state.live);
+  if (state.live) videoEl.play();
+  else videoEl.pause();
+}
+
+function flipCamera() {
+  state.facing = state.facing === "environment" ? "user" : "environment";
+  $("btnFlip").textContent = state.facing === "environment" ? "后置" : "前置";
+  if (state.mode === "camera") startCamera();
+}
+
+function openPicker() {
+  $("filePicker").click();
+}
+
+$("filePicker").addEventListener("change", (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  stopStream();
+  const url = URL.createObjectURL(file);
+  photoEl.onload = () => {
+    photoEl.hidden = false;
+    videoEl.hidden = true;
+    state.mode = "photo";
+    $("errorBox").hidden = true;
+    requestAnimationFrame(update);
+  };
+  photoEl.src = url;
+  e.target.value = "";
+});
+
+function cropToCanvas(sourceEl, srcW, srcH) {
+  const bw = boxEl.clientWidth;
+  const bh = boxEl.clientHeight;
+  const s = srcW / bw;
+  const sx = frameEl.offsetLeft * s;
+  const sy = frameEl.offsetTop * s;
+  const sw = frameEl.offsetWidth * s;
+  const sh = frameEl.offsetHeight * s;
+
+  const c = document.createElement("canvas");
+  c.width = Math.max(1, Math.round(sw));
+  c.height = Math.max(1, Math.round(sh));
+  const ctx = c.getContext("2d");
+  ctx.drawImage(sourceEl, sx, sy, sw, sh, 0, 0, c.width, c.height);
+  return c;
+}
+
+function stampBar(canvas, focal, fmt) {
+  const barH = Math.max(44, Math.round(canvas.width * 0.08));
+  const out = document.createElement("canvas");
+  out.width = canvas.width;
+  out.height = canvas.height + barH;
+
+  const ctx = out.getContext("2d");
+  ctx.drawImage(canvas, 0, 0);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, canvas.height, out.width, barH);
+
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  const time = d.getFullYear() + "." + p(d.getMonth() + 1) + "." + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+  const info = time + "  ·  " + fmt.label + "  ·  " + ratioLabel() + "  ·  " + focal + "mm";
+
+  const margin = Math.round(barH * 0.36);
+  const ty = canvas.height + barH / 2;
+  const fs = Math.round(barH * 0.34);
+  const family = "-apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif";
+
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#111";
+  ctx.font = "700 " + fs + "px " + family;
+  ctx.textAlign = "left";
+  ctx.fillText("Art1st", margin, ty);
+  const nameW = ctx.measureText("Art1st").width;
+
+  let ifs = fs;
+  const rightX = out.width - margin;
+  const avail = rightX - (margin + nameW) - fs;
+  ctx.fillStyle = "#555";
+  ctx.textAlign = "right";
+  ctx.font = "400 " + ifs + "px " + family;
+  while (ifs > 9 && ctx.measureText(info).width > avail) {
+    ifs -= 1;
+    ctx.font = "400 " + ifs + "px " + family;
+  }
+  ctx.fillText(info, rightX, ty);
+
+  return out;
+}
+
+function capture() {
+  let canvas;
+  const [sw, sh] = sourceSize();
+  if (!sw || !sh) return;
+
+  if (state.mode === "camera") canvas = cropToCanvas(videoEl, sw, sh);
+  else canvas = cropToCanvas(photoEl, sw, sh);
+
+  const { focal, fmt } = effectiveFocal();
+  const eq = Math.round((36 / fmt.w) * focal * 10) / 10;
+
+  const out = stampBar(canvas, focal, fmt);
+
+  out.toBlob(
+    (blob) => {
+      if (!blob) return;
+      if (state.lastBlobUrl) URL.revokeObjectURL(state.lastBlobUrl);
+      state.lastBlobUrl = URL.createObjectURL(blob);
+      $("resultImg").src = state.lastBlobUrl;
+      $("resultInfo").innerHTML =
+        focal + "mm · " + fmt.label + " · 等效 " + eq + "mm · " + ratioLabel() +
+        "<br>" + out.width + " × " + out.height + " px" +
+        "<br><span style='color:#666'>长按图片可存入相册</span>";
+      $("result").hidden = false;
+    },
+    "image/jpeg",
+    0.95
+  );
+}
+
+function saveAgain() {
+  if (!state.lastBlobUrl) return;
+  const { focal } = effectiveFocal();
+  const a = document.createElement("a");
+  a.href = state.lastBlobUrl;
+  a.download = "FR_" + focal + "mm_" + Date.now() + ".jpg";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+function closeResult() { $("result").hidden = true; }
+function openSheet() { $("sheet").hidden = false; }
+function closeSheet() { $("sheet").hidden = true; }
+
+$("selFormat").addEventListener("change", (e) => {
+  state.format = e.target.value;
+  syncFocalBar();
+  update();
+});
+
+$("selRatio").addEventListener("change", (e) => {
+  state.ratio = Number(e.target.value);
+  update();
+});
+
+$("selGuide").addEventListener("change", (e) => {
+  state.guide = e.target.value;
+  renderGuides();
+  update();
+});
+
+$("rngPhone").addEventListener("input", (e) => {
+  state.phoneFocal = Number(e.target.value);
+  $("valPhone").textContent = state.phoneFocal + "mm";
+  update();
+});
+
+$("btnWarn").addEventListener("click", () => {
+  state.warnOn = !state.warnOn;
+  const b = $("btnWarn");
+  b.textContent = state.warnOn ? "开启" : "关闭";
+  b.style.color = state.warnOn ? "#f59e0b" : "#888";
+  b.style.borderColor = state.warnOn ? "#f59e0b" : "#262626";
+  update();
+});
+
+$("btnFlip").addEventListener("click", flipCamera);
+
+window.addEventListener("resize", update);
+window.addEventListener("orientationchange", () => setTimeout(update, 350));
+videoEl.addEventListener("loadedmetadata", update);
+photoEl.addEventListener("load", update);
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    if (state.mode === "camera") stopStream();
+  } else if (state.mode === "camera" && !stream) {
+    startCamera();
+  }
+});
+
+buildFocalBar();
+renderGuides();
+update();
+startCamera();
+</script>
+</body>
+</html>
