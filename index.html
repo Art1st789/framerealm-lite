@@ -106,6 +106,8 @@ select{font-family:inherit}
 .row:last-of-type{border-bottom:none}
 .row .val{color:#f59e0b;font-variant-numeric:tabular-nums;font-weight:700;min-width:44px;text-align:right}
 .row input[type=range]{width:120px;accent-color:#f59e0b}
+.row input[type=text]{background:#1a1a1a;border:1px solid #262626;border-radius:8px;color:#f59e0b;font-weight:700;font-size:13px;padding:8px 10px;width:150px;text-align:right;font-variant-numeric:tabular-nums;outline:none}
+.row input[type=text]:focus{border-color:#f59e0b}
 .note{color:#888;font-size:11.5px;line-height:1.75;padding:14px 0 0}
 .btn-block{width:100%;margin-top:14px;padding:13px;border-radius:11px;background:#1e1e1e;border:1px solid #2a2a2a;font-size:14px;color:#ddd}
 .btn-block.primary{background:#f59e0b;color:#0a0a0a;font-weight:700;border-color:#f59e0b}
@@ -257,6 +259,10 @@ select{font-family:inherit}
     <div class="sheet-inner">
       <h3>设置</h3>
       <div class="row">
+        <span>水印署名<small style="display:block;font-size:10px;color:#777;margin-top:2px">导出白条左下角 · 留空用默认</small></span>
+        <input type="text" id="wmName" maxlength="20" placeholder="Art1st" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="row">
         <span>手机主摄等效焦距</span>
         <span style="display:flex;align-items:center;gap:8px">
           <input type="range" id="rngPhone" min="13" max="35" step="1">
@@ -306,7 +312,7 @@ select{font-family:inherit}
 "use strict";
 
 const FORMATS = {
-  ff:     { label:"全画幅",       w:36,    note:"36×24"  },
+  ff:     { label:"Full Frame",  w:36,    note:"36×24"  },
   apsc:   { label:"APS-C",       w:23.6,  note:"1.5x"   },
   m43:    { label:"M4/3",        w:17.3,  note:"2.0x"   },
   mf:     { label:"中画幅",       w:44,    note:"44×33"  },
@@ -323,6 +329,9 @@ const RATIOS = [
   { v: 1.5,    short: "3:2",    label: "3:2 横" },
   { v: 1.3333, short: "4:3",    label: "4:3 横" },
   { v: 1.7778, short: "16:9",   label: "16:9 横" },
+  { v: 1.78,   short: "1.78:1", label: "1.78:1 宽幕" },
+  { v: 1.85,   short: "1.85:1", label: "1.85:1 宽幕" },
+  { v: 2.35,   short: "2.35:1", label: "2.35:1 宽幕" },
   { v: 2.39,   short: "2.39:1", label: "2.39:1 宽幕" },
   { v: 1,      short: "1:1",    label: "1:1 方" },
   { v: 0.6667, short: "2:3",    label: "2:3 竖" },
@@ -341,6 +350,7 @@ const state = {
   warnOn: true,
   live: true,
   lastBlobUrl: null,
+  watermark: "Art1st",
 };
 
 const $ = (id) => document.getElementById(id);
@@ -411,7 +421,7 @@ function layoutBox() {
 
 function ratioLabel() {
   const v = state.ratio;
-  for (const r of RATIOS) if (Math.abs(v - r.v) < 0.005) return r.short;
+  for (const r of RATIOS) if (Math.abs(v - r.v) < 0.0005) return r.short;
   return String(v);
 }
 
@@ -748,7 +758,7 @@ function drawCompass(ctx, cx, cy, r, heading, ring, northFill, southFill) {
 
 function stampBar(canvas, focal, fmt, heading) {
   const hasDir = typeof heading === "number" && !isNaN(heading);
-  const barH = Math.max(48, Math.round(canvas.width * 0.10));
+  const barH = Math.max(44, Math.round(canvas.height * 0.15));
   const out = document.createElement("canvas");
   out.width = canvas.width;
   out.height = canvas.height + barH;
@@ -772,11 +782,12 @@ function stampBar(canvas, focal, fmt, heading) {
 
   const fsName = Math.round(barH * 0.30);
   const fsTime = Math.round(barH * 0.17);
+  const wm = (state.watermark || "").trim() || "Art1st";
   ctx.textAlign = "left";
   ctx.fillStyle = "#111111";
   ctx.font = "700 " + fsName + "px " + family;
-  ctx.fillText("Art1st", padX, top + barH * 0.38);
-  const nameW = ctx.measureText("Art1st").width;
+  ctx.fillText(wm, padX, top + barH * 0.38);
+  const nameW = ctx.measureText(wm).width;
   ctx.fillStyle = "#888888";
   ctx.font = "400 " + fsTime + "px " + family;
   ctx.fillText(timeStr, padX, top + barH * 0.72);
@@ -796,28 +807,32 @@ function stampBar(canvas, focal, fmt, heading) {
 
   const sideMax = Math.max(leftW, rightW);
   const avail = out.width - padX * 2 - sideMax * 2 - barH * 0.4;
-  const midRegular = fmt.label + "  ·  " + ratioLabel() + "  ·  ";
-  const midBold = focal + "mm";
-  let fsC = Math.round(barH * 0.26);
-  ctx.font = "400 " + fsC + "px " + family;
-  let wReg = ctx.measureText(midRegular).width;
-  ctx.font = "700 " + fsC + "px " + family;
-  let wBold = ctx.measureText(midBold).width;
-  while (fsC > 9 && wReg + wBold > avail) {
+  const SEP = "  |  ";
+  const runs = [
+    { t: fmt.label, bold: false, col: "#111111", k: 1 },
+    { t: SEP, bold: false, col: "#999999", k: 1 },
+    { t: ratioLabel(), bold: false, col: "#111111", k: 1 },
+    { t: SEP, bold: false, col: "#999999", k: 1 },
+    { t: focal + "mm", bold: true, col: "#111111", k: 1.3 },
+  ];
+  let fsC = Math.round(barH * 0.31);
+  const measureRuns = () => runs.reduce((s, r) => {
+    ctx.font = (r.bold ? "700 " : "400 ") + Math.round(fsC * r.k) + "px " + family;
+    return s + ctx.measureText(r.t).width;
+  }, 0);
+  let total = measureRuns();
+  while (fsC > 9 && total > avail) {
     fsC -= 1;
-    ctx.font = "400 " + fsC + "px " + family;
-    wReg = ctx.measureText(midRegular).width;
-    ctx.font = "700 " + fsC + "px " + family;
-    wBold = ctx.measureText(midBold).width;
+    total = measureRuns();
   }
-  const startX = Math.round((out.width - (wReg + wBold)) / 2);
+  let x = Math.round((out.width - total) / 2);
   ctx.textAlign = "left";
-  ctx.font = "400 " + fsC + "px " + family;
-  ctx.fillStyle = "#666666";
-  ctx.fillText(midRegular, startX, midY);
-  ctx.font = "700 " + fsC + "px " + family;
-  ctx.fillStyle = "#111111";
-  ctx.fillText(midBold, startX + wReg, midY);
+  runs.forEach((r) => {
+    ctx.font = (r.bold ? "700 " : "400 ") + Math.round(fsC * r.k) + "px " + family;
+    ctx.fillStyle = r.col;
+    ctx.fillText(r.t, x, midY);
+    x += ctx.measureText(r.t).width;
+  });
 
   if (hasDir) {
     const cxIcon = out.width - padX - iconR;
@@ -891,7 +906,7 @@ function pickItems(kind) {
     id: String(r.v),
     label: r.label,
     sub: "",
-    on: Math.abs(r.v - state.ratio) < 0.005,
+    on: Math.abs(r.v - state.ratio) < 0.0005,
   }));
 }
 
@@ -942,6 +957,17 @@ $("btnWarn").addEventListener("click", () => {
 });
 
 $("btnFlip").addEventListener("click", flipCamera);
+
+try {
+  state.watermark = localStorage.getItem("fr_watermark") || "Art1st";
+} catch (err) {}
+$("wmName").value = state.watermark;
+$("wmName").addEventListener("input", (e) => {
+  state.watermark = e.target.value.trim().slice(0, 20);
+  try {
+    localStorage.setItem("fr_watermark", state.watermark);
+  } catch (err) {}
+});
 
 $("btnCompassSheet").addEventListener("click", async () => {
   await toggleCompass();
