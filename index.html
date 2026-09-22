@@ -45,7 +45,14 @@ select{font-family:inherit}
 .guides.center .h1{top:50%;display:block}
 
 .hud{position:absolute;top:10px;right:10px;z-index:6;pointer-events:none}
-.infobar{position:absolute;bottom:12px;left:10px;right:10px;display:flex;justify-content:center;align-items:center;gap:6px;z-index:6;pointer-events:none;flex-wrap:wrap}
+.infobar{position:absolute;bottom:12px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:flex-end;gap:8px;z-index:6;pointer-events:none}
+.infobar .chips{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.dir{display:flex;align-items:center;gap:7px;flex-shrink:0;background:rgba(0,0,0,.62);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.11);border-radius:8px;padding:3px 9px 3px 10px}
+.dir b{font-size:11px;font-variant-numeric:tabular-nums;color:#f59e0b;font-weight:700;white-space:nowrap}
+.dir svg{width:21px;height:21px;display:block}
+.dir.weak b{color:#8a8a8a}
+.segbtn{padding:6px 9px;border-radius:8px;background:#1a1a1a;border:1px solid #262626;color:#bbb;font-size:11.5px;font-weight:500}
+.segbtn.on{background:#f59e0b;border-color:#f59e0b;color:#0a0a0a;font-weight:700}
 .chip{background:rgba(0,0,0,.62);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.11);border-radius:8px;padding:5px 10px;font-size:11px;line-height:1.55;font-variant-numeric:tabular-nums;color:#eee}
 .chip b{color:#f59e0b;font-weight:700}
 .chip .dim{color:#999}
@@ -140,9 +147,22 @@ select{font-family:inherit}
     </div>
 
     <div class="infobar">
-      <div class="chip"><b id="hudFocal">50mm</b> <span class="dim">等效</span> <span id="hudEq">50mm</span></div>
-      <div class="chip" id="hudFormat">全画幅</div>
-      <div class="chip" id="hudRatio">3:2</div>
+      <div class="chips">
+        <div class="chip"><b id="hudFocal">50mm</b> <span class="dim">等效</span> <span id="hudEq">50mm</span></div>
+        <div class="chip" id="hudFormat">全画幅</div>
+        <div class="chip" id="hudRatio">3:2</div>
+      </div>
+      <div class="dir" id="dirBox" hidden>
+        <b id="dirTxt">北 0°</b>
+        <svg viewBox="0 0 40 40" aria-hidden="true">
+          <circle cx="20" cy="20" r="15" fill="none" stroke="#f59e0b" stroke-width="1.6" opacity=".85"/>
+          <g id="needle">
+            <polygon points="20,7 24.5,20 15.5,20" fill="#f59e0b"/>
+            <polygon points="20,33 24.5,20 15.5,20" fill="#6b6b6b"/>
+          </g>
+          <circle cx="20" cy="20" r="1.8" fill="#f59e0b"/>
+        </svg>
+      </div>
     </div>
 
     <div class="warnchip" id="warnHint" hidden></div>
@@ -209,6 +229,10 @@ select{font-family:inherit}
         <svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M5 8h14"/><path d="M5 16h14"/></svg>
       </button>
 
+      <button class="ico" id="btnCompass" onclick="toggleCompass()" title="方向 / 指南针" hidden>
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.9 8.1l-2.4 5.4-5.4 2.4 2.4-5.4z"/></svg>
+      </button>
+
       <button class="ico" onclick="openSheet()" title="设置">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1v.3a2 2 0 11-4 0v-.2a1.6 1.6 0 00-2.8-1.1l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 003.5 15a2 2 0 010-4h.2a1.6 1.6 0 001.1-2.8l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 0010.4 4.3V4a2 2 0 114 0v.2a1.6 1.6 0 002.8 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 001.1 2.7h.3a2 2 0 010 4h-.2z"/></svg>
       </button>
@@ -233,7 +257,21 @@ select{font-family:inherit}
         <span>前置 / 后置镜头</span>
         <button class="ico" id="btnFlip" style="width:auto;padding:6px 12px;font-size:12px;color:#ddd">后置</button>
       </div>
+      <div class="row">
+        <span>方向 / 指南针</span>
+        <button class="ico" id="btnCompassSheet" style="width:auto;padding:6px 12px;font-size:12px;color:#ddd">开启</button>
+      </div>
+      <div class="row">
+        <span>横屏方向补偿</span>
+        <span style="display:flex;gap:6px">
+          <button class="segbtn on" data-off="auto">自动</button>
+          <button class="segbtn" data-off="p90">+90°</button>
+          <button class="segbtn" data-off="m90">-90°</button>
+          <button class="segbtn" data-off="none">不补偿</button>
+        </span>
+      </div>
       <p class="note">主摄等效焦距决定模拟精度:iPhone 主摄通常为 24–26mm,超广角约 13mm。目标焦距越接近主摄、裁切越少、画质越好。若目标焦距小于主摄,说明需要更广的镜头。</p>
+      <p class="note">方向补偿校准:横屏取景时手机朝向需按屏幕旋转角换算,若发现读数与实际方向差 90°,用手机自带「指南针」App 对照后,把补偿切成 +90° 或 -90° 即可。磁吸手机壳、支架会让读数偏 10–30°,贝壳内、车内更明显。</p>
       <button class="btn-block primary" onclick="closeSheet()">完成</button>
     </div>
   </div>
@@ -406,6 +444,150 @@ function renderGuides() {
   guidesEl.className = "guides" + (state.guide === "none" ? "" : " " + state.guide);
 }
 
+const DIR_NAMES = ["北", "东北", "东", "东南", "南", "西南", "西", "西北"];
+
+const compass = {
+  on: false,
+  hasFix: false,
+  heading: 0,
+  sx: 0,
+  sy: 0,
+  seeded: false,
+  lastUI: 0,
+  offset: "auto",
+  hintTimer: null,
+  supported: typeof DeviceOrientationEvent !== "undefined",
+};
+
+function dirName(deg) {
+  const a = ((deg % 360) + 360) % 360;
+  return DIR_NAMES[Math.round(a / 45) % 8];
+}
+
+function dirLabel(deg) {
+  const a = ((deg % 360) + 360) % 360;
+  return dirName(a) + " " + Math.round(a) + "°";
+}
+
+function screenAngle() {
+  if (screen.orientation && typeof screen.orientation.angle === "number") return screen.orientation.angle;
+  if (typeof window.orientation === "number") return window.orientation;
+  return 0;
+}
+
+function applyOffset(raw) {
+  let off = 0;
+  if (compass.offset === "auto") {
+    const a = ((screenAngle() % 360) + 360) % 360;
+    off = a === 90 ? -90 : a === 270 ? 90 : 0;
+  } else if (compass.offset === "p90") off = 90;
+  else if (compass.offset === "m90") off = -90;
+  return (((raw + off) % 360) + 360) % 360;
+}
+
+function onOrient(e) {
+  let raw = null;
+  if (typeof e.webkitCompassHeading === "number" && !isNaN(e.webkitCompassHeading) && e.webkitCompassHeading >= 0) {
+    raw = e.webkitCompassHeading;
+  } else if (typeof e.alpha === "number") {
+    raw = (360 - e.alpha) % 360;
+  }
+  if (raw === null) return;
+
+  const h = applyOffset(raw);
+  const rad = (h * Math.PI) / 180;
+  if (!compass.seeded) {
+    compass.sx = Math.sin(rad);
+    compass.sy = Math.cos(rad);
+    compass.seeded = true;
+  }
+  const k = 0.2;
+  compass.sx += (Math.sin(rad) - compass.sx) * k;
+  compass.sy += (Math.cos(rad) - compass.sy) * k;
+  let sm = (Math.atan2(compass.sx, compass.sy) * 180) / Math.PI;
+  if (sm < 0) sm += 360;
+  compass.heading = sm;
+
+  const first = !compass.hasFix;
+  compass.hasFix = true;
+  if (first) syncCompassUI();
+
+  const now = window.performance && performance.now ? performance.now() : Date.now();
+  if (now - compass.lastUI > 70) {
+    compass.lastUI = now;
+    paintCompass();
+  }
+}
+
+function paintCompass() {
+  if (!compass.hasFix) return;
+  $("dirTxt").textContent = dirLabel(compass.heading);
+  const n = $("needle");
+  if (n) n.setAttribute("transform", "rotate(" + -Math.round(compass.heading) + " 20 20)");
+}
+
+function compassHint(msg) {
+  const w = $("warnHint");
+  w.hidden = false;
+  w.textContent = msg;
+  clearTimeout(compass.hintTimer);
+  compass.hintTimer = setTimeout(() => update(), 3400);
+}
+
+async function toggleCompass() {
+  if (compass.on) stopCompass();
+  else await startCompass();
+}
+
+async function startCompass() {
+  if (typeof DeviceOrientationEvent === "undefined") {
+    compassHint("此设备不支持方向传感器");
+    return;
+  }
+  try {
+    if (typeof DeviceOrientationEvent.requestPermission === "function") {
+      const res = await DeviceOrientationEvent.requestPermission();
+      if (res !== "granted") {
+        compassHint("未获得方向权限 · 可在 设置 → Safari 中开启后重试");
+        return;
+      }
+    }
+    window.addEventListener("deviceorientationabsolute", onOrient, true);
+    window.addEventListener("deviceorientation", onOrient, true);
+    compass.on = true;
+    syncCompassUI();
+    setTimeout(() => {
+      if (!compass.hasFix) compassHint("未读到方向数据 · 该设备可能没有磁力计");
+    }, 1800);
+  } catch (err) {
+    compassHint("开启失败:" + ((err && err.message) || "未知错误"));
+  }
+}
+
+function stopCompass() {
+  window.removeEventListener("deviceorientationabsolute", onOrient, true);
+  window.removeEventListener("deviceorientation", onOrient, true);
+  compass.on = false;
+  compass.hasFix = false;
+  compass.seeded = false;
+  syncCompassUI();
+}
+
+function syncCompassUI() {
+  $("dirBox").hidden = !(compass.on && compass.hasFix);
+  const b = $("btnCompass");
+  if (b) {
+    b.hidden = !compass.supported;
+    b.classList.toggle("on", compass.on);
+  }
+  const sb = $("btnCompassSheet");
+  if (sb) {
+    sb.textContent = compass.on ? "已开启" : "开启";
+    sb.style.color = compass.on ? "#f59e0b" : "#ddd";
+    sb.style.borderColor = compass.on ? "#f59e0b" : "#262626";
+  }
+}
+
 async function startCamera() {
   $("errorBox").hidden = true;
   stopStream();
@@ -511,8 +693,35 @@ function cropToCanvas(sourceEl, srcW, srcH) {
   return c;
 }
 
-function stampBar(canvas, focal, fmt) {
-  const barH = Math.max(44, Math.round(canvas.width * 0.08));
+function drawCompass(ctx, cx, cy, r, heading, ring, northFill, southFill) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.strokeStyle = ring;
+  ctx.lineWidth = Math.max(1, r * 0.1);
+  ctx.stroke();
+  ctx.translate(cx, cy);
+  ctx.rotate((-heading * Math.PI) / 180);
+  ctx.beginPath();
+  ctx.moveTo(0, -r * 0.74);
+  ctx.lineTo(r * 0.26, 0);
+  ctx.lineTo(-r * 0.26, 0);
+  ctx.closePath();
+  ctx.fillStyle = northFill;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(0, r * 0.74);
+  ctx.lineTo(r * 0.26, 0);
+  ctx.lineTo(-r * 0.26, 0);
+  ctx.closePath();
+  ctx.fillStyle = southFill;
+  ctx.fill();
+  ctx.restore();
+}
+
+function stampBar(canvas, focal, fmt, heading) {
+  const hasDir = typeof heading === "number" && !isNaN(heading);
+  const barH = Math.max(48, Math.round(canvas.width * 0.10));
   const out = document.createElement("canvas");
   out.width = canvas.width;
   out.height = canvas.height + barH;
@@ -522,34 +731,75 @@ function stampBar(canvas, focal, fmt) {
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, canvas.height, out.width, barH);
 
+  const family = "-apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif";
+  const padX = Math.round(barH * 0.22);
+  const top = canvas.height;
+  const midY = top + barH / 2;
+  ctx.textBaseline = "middle";
+
   const d = new Date();
   const p = (n) => String(n).padStart(2, "0");
-  const time = d.getFullYear() + "." + p(d.getMonth() + 1) + "." + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
-  const info = time + "  ·  " + fmt.label + "  ·  " + ratioLabel() + "  ·  " + focal + "mm";
+  const timeStr =
+    d.getFullYear() + "." + p(d.getMonth() + 1) + "." + p(d.getDate()) +
+    " " + p(d.getHours()) + ":" + p(d.getMinutes());
 
-  const margin = Math.round(barH * 0.36);
-  const ty = canvas.height + barH / 2;
-  const fs = Math.round(barH * 0.34);
-  const family = "-apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif";
-
-  ctx.textBaseline = "middle";
-  ctx.fillStyle = "#111";
-  ctx.font = "700 " + fs + "px " + family;
+  const fsName = Math.round(barH * 0.30);
+  const fsTime = Math.round(barH * 0.17);
   ctx.textAlign = "left";
-  ctx.fillText("Art1st", margin, ty);
+  ctx.fillStyle = "#111111";
+  ctx.font = "700 " + fsName + "px " + family;
+  ctx.fillText("Art1st", padX, top + barH * 0.38);
   const nameW = ctx.measureText("Art1st").width;
+  ctx.fillStyle = "#888888";
+  ctx.font = "400 " + fsTime + "px " + family;
+  ctx.fillText(timeStr, padX, top + barH * 0.72);
+  const leftW = Math.max(nameW, ctx.measureText(timeStr).width);
 
-  let ifs = fs;
-  const rightX = out.width - margin;
-  const avail = rightX - (margin + nameW) - fs;
-  ctx.fillStyle = "#555";
-  ctx.textAlign = "right";
-  ctx.font = "400 " + ifs + "px " + family;
-  while (ifs > 9 && ctx.measureText(info).width > avail) {
-    ifs -= 1;
-    ctx.font = "400 " + ifs + "px " + family;
+  let iconR = 0;
+  let dirStr = "";
+  let dirFs = 0;
+  let rightW = 0;
+  if (hasDir) {
+    iconR = barH * 0.30;
+    dirFs = Math.round(barH * 0.21);
+    dirStr = dirLabel(heading);
+    ctx.font = "400 " + dirFs + "px " + family;
+    rightW = ctx.measureText(dirStr).width + iconR * 2 + barH * 0.18;
   }
-  ctx.fillText(info, rightX, ty);
+
+  const sideMax = Math.max(leftW, rightW);
+  const avail = out.width - padX * 2 - sideMax * 2 - barH * 0.4;
+  const midRegular = fmt.label + "  ·  " + ratioLabel() + "  ·  ";
+  const midBold = focal + "mm";
+  let fsC = Math.round(barH * 0.26);
+  ctx.font = "400 " + fsC + "px " + family;
+  let wReg = ctx.measureText(midRegular).width;
+  ctx.font = "700 " + fsC + "px " + family;
+  let wBold = ctx.measureText(midBold).width;
+  while (fsC > 9 && wReg + wBold > avail) {
+    fsC -= 1;
+    ctx.font = "400 " + fsC + "px " + family;
+    wReg = ctx.measureText(midRegular).width;
+    ctx.font = "700 " + fsC + "px " + family;
+    wBold = ctx.measureText(midBold).width;
+  }
+  const startX = Math.round((out.width - (wReg + wBold)) / 2);
+  ctx.textAlign = "left";
+  ctx.font = "400 " + fsC + "px " + family;
+  ctx.fillStyle = "#666666";
+  ctx.fillText(midRegular, startX, midY);
+  ctx.font = "700 " + fsC + "px " + family;
+  ctx.fillStyle = "#111111";
+  ctx.fillText(midBold, startX + wReg, midY);
+
+  if (hasDir) {
+    const cxIcon = out.width - padX - iconR;
+    ctx.textAlign = "right";
+    ctx.font = "400 " + dirFs + "px " + family;
+    ctx.fillStyle = "#333333";
+    ctx.fillText(dirStr, cxIcon - iconR - barH * 0.18, midY);
+    drawCompass(ctx, cxIcon, midY, iconR, heading, "#333333", "#f59e0b", "#c9c9c9");
+  }
 
   return out;
 }
@@ -564,8 +814,9 @@ function capture() {
 
   const { focal, fmt } = effectiveFocal();
   const eq = Math.round((36 / fmt.w) * focal * 10) / 10;
+  const hdg = compass.on && compass.hasFix ? compass.heading : null;
 
-  const out = stampBar(canvas, focal, fmt);
+  const out = stampBar(canvas, focal, fmt, hdg);
 
   out.toBlob(
     (blob) => {
@@ -575,6 +826,7 @@ function capture() {
       $("resultImg").src = state.lastBlobUrl;
       $("resultInfo").innerHTML =
         focal + "mm · " + fmt.label + " · 等效 " + eq + "mm · " + ratioLabel() +
+        (hdg !== null ? " · " + dirLabel(hdg) : "") +
         "<br>" + out.width + " × " + out.height + " px" +
         "<br><span style='color:#666'>长按图片可存入相册</span>";
       $("result").hidden = false;
@@ -633,6 +885,19 @@ $("btnWarn").addEventListener("click", () => {
 
 $("btnFlip").addEventListener("click", flipCamera);
 
+$("btnCompassSheet").addEventListener("click", async () => {
+  await toggleCompass();
+  if (compass.on) $("sheet").hidden = true;
+});
+
+document.querySelectorAll("[data-off]").forEach((b) => {
+  b.addEventListener("click", () => {
+    compass.offset = b.dataset.off;
+    document.querySelectorAll("[data-off]").forEach((x) => x.classList.toggle("on", x === b));
+    compass.seeded = false;
+  });
+});
+
 window.addEventListener("resize", update);
 window.addEventListener("orientationchange", () => setTimeout(update, 350));
 videoEl.addEventListener("loadedmetadata", update);
@@ -648,8 +913,13 @@ document.addEventListener("visibilitychange", () => {
 
 buildFocalBar();
 renderGuides();
+syncCompassUI();
 update();
 startCamera();
+
+if (compass.supported && typeof DeviceOrientationEvent.requestPermission !== "function") {
+  startCompass();
+}
 </script>
 </body>
 </html>
