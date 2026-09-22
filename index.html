@@ -47,10 +47,24 @@ select{font-family:inherit}
 .hud{position:absolute;top:10px;right:10px;z-index:6;pointer-events:none}
 .infobar{position:absolute;bottom:12px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:flex-end;gap:8px;z-index:6;pointer-events:none}
 .infobar .chips{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.dir{display:flex;align-items:center;gap:7px;flex-shrink:0;background:rgba(0,0,0,.62);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.11);border-radius:8px;padding:3px 9px 3px 10px}
-.dir b{font-size:11px;font-variant-numeric:tabular-nums;color:#f59e0b;font-weight:700;white-space:nowrap}
+.chips .chart{pointer-events:auto;display:flex;align-items:center;gap:6px}
+.cv{width:0;height:0;border-left:3.5px solid transparent;border-right:3.5px solid transparent;border-top:4px solid #999;display:block;flex-shrink:0}
+.dir{display:flex;align-items:center;gap:7px;flex-shrink:0;background:rgba(0,0,0,.62);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.11);border-radius:8px;padding:3px 9px 3px 10px;pointer-events:auto;transition:border-color .15s}
+.dir b{font-size:11px;font-variant-numeric:tabular-nums;color:#8a8a8a;font-weight:700;white-space:nowrap;transition:color .15s}
 .dir svg{width:21px;height:21px;display:block}
-.dir.weak b{color:#8a8a8a}
+.dir circle.ring{stroke:#6b6b6b}
+.dir polygon.n{fill:#8a8a8a}
+.dir polygon.s{fill:#5a5a5a}
+.dir.on{border-color:rgba(245,158,11,.45)}
+.dir.on b{color:#f59e0b}
+.dir.on circle.ring{stroke:#f59e0b}
+.dir.on polygon.n{fill:#f59e0b}
+.dir.on polygon.s{fill:#6b6b6b}
+.pickgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pickitem{padding:11px 6px;border-radius:10px;background:#1a1a1a;border:1px solid #262626;color:#ddd;font-size:12.5px;font-weight:500;text-align:center;line-height:1.4}
+.pickitem small{display:block;font-size:10px;opacity:.55;font-weight:400}
+.pickitem.on{background:#f59e0b;border-color:#f59e0b;color:#0a0a0a;font-weight:700}
+.pickitem.on small{opacity:.7}
 .segbtn{padding:6px 9px;border-radius:8px;background:#1a1a1a;border:1px solid #262626;color:#bbb;font-size:11.5px;font-weight:500}
 .segbtn.on{background:#f59e0b;border-color:#f59e0b;color:#0a0a0a;font-weight:700}
 .chip{background:rgba(0,0,0,.62);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.11);border-radius:8px;padding:5px 10px;font-size:11px;line-height:1.55;font-variant-numeric:tabular-nums;color:#eee}
@@ -74,6 +88,7 @@ select{font-family:inherit}
 .opt select{width:100%;background:#1a1a1a;border:1px solid #262626;color:#ddd;font-size:12px;padding:7px 22px 7px 8px;border-radius:8px;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23888'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center}
 
 .action-bar{display:flex;align-items:center;justify-content:space-between;padding:4px 2px 0}
+.actside{display:flex;align-items:center;gap:8px}
 .ico{width:46px;height:46px;border-radius:11px;background:#1a1a1a;border:1px solid #262626;display:flex;align-items:center;justify-content:center;transition:background .13s,transform .1s;flex-shrink:0}
 .ico:active{background:#262626;transform:scale(.94)}
 .ico svg{width:21px;height:21px;stroke:#ccc;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
@@ -113,14 +128,27 @@ select{font-family:inherit}
 @media (orientation:landscape) and (max-height:560px){
   #app{flex-direction:row;padding-top:0;padding-bottom:0;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
   .viewport{flex:1;height:100%}
-  .controls{width:196px;height:100%;flex-direction:column;justify-content:center;border-top:none;border-left:1px solid #1e1e1e;padding:10px 12px;overflow-y:auto;scrollbar-width:none}
+  .controls{width:172px;height:100%;flex-direction:column;justify-content:center;gap:9px;border-top:none;border-left:1px solid #1e1e1e;padding:8px 10px;overflow-y:auto;scrollbar-width:none}
   .controls::-webkit-scrollbar{display:none}
-  .focal-bar{flex-wrap:wrap;overflow:visible}
-  .fbtn{padding:6px 10px;font-size:12px}
-  .opt-bar{flex-direction:column;gap:8px;overflow:visible}
-  .action-bar{padding-top:12px}
-  .shutter{width:54px;height:54px}
-  .infobar{gap:5px}
+  .focal-bar{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;overflow:visible;padding-bottom:0}
+  .fbtn{padding:5px 4px;font-size:11.5px;text-align:center}
+  .opt-bar{flex-direction:column;gap:8px;overflow:visible;padding-bottom:0}
+  .opt{max-width:none !important}
+  .action-bar{flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:center;gap:9px;padding:0}
+  .actside{display:contents}
+  .shutter{order:-1;flex:0 0 100%;max-width:52px;width:52px;height:52px;box-shadow:0 0 0 2.5px #0f0f0f,0 0 0 4px #444}
+  .ico{width:42px;height:42px;border-radius:10px}
+  .ico svg{width:19px;height:19px}
+  .infobar{gap:6px}
+}
+
+@media (orientation:portrait) and (max-width:385px){
+  .chip{padding:4px 8px;font-size:10.5px}
+  .dir{padding:2px 7px 2px 8px;gap:6px}
+  .dir b{font-size:10.5px}
+  .dir svg{width:19px;height:19px}
+  .fbtn{padding:6px 11px;font-size:12.5px}
+  .shutter{width:58px;height:58px}
 }
 </style>
 </head>
@@ -149,20 +177,24 @@ select{font-family:inherit}
     <div class="infobar">
       <div class="chips">
         <div class="chip"><b id="hudFocal">50mm</b> <span class="dim">等效</span> <span id="hudEq">50mm</span></div>
-        <div class="chip" id="hudFormat">全画幅</div>
-        <div class="chip" id="hudRatio">3:2</div>
+        <button class="chip chart" onclick="openPick('format')">
+          <span id="hudFormat">全画幅</span><i class="cv"></i>
+        </button>
+        <button class="chip chart" onclick="openPick('ratio')">
+          <span id="hudRatio">3:2</span><i class="cv"></i>
+        </button>
       </div>
-      <div class="dir" id="dirBox" hidden>
-        <b id="dirTxt">北 0°</b>
+      <button class="dir" id="dirBox" onclick="toggleCompass()">
+        <b id="dirTxt">方向</b>
         <svg viewBox="0 0 40 40" aria-hidden="true">
-          <circle cx="20" cy="20" r="15" fill="none" stroke="#f59e0b" stroke-width="1.6" opacity=".85"/>
+          <circle class="ring" cx="20" cy="20" r="15" fill="none" stroke-width="1.6" opacity=".85"/>
           <g id="needle">
-            <polygon points="20,7 24.5,20 15.5,20" fill="#f59e0b"/>
-            <polygon points="20,33 24.5,20 15.5,20" fill="#6b6b6b"/>
+            <polygon class="n" points="20,7 24.5,20 15.5,20"/>
+            <polygon class="s" points="20,33 24.5,20 15.5,20"/>
           </g>
-          <circle cx="20" cy="20" r="1.8" fill="#f59e0b"/>
+          <circle class="ring" cx="20" cy="20" r="1.8" fill="currentColor" stroke="none"/>
         </svg>
-      </div>
+      </button>
     </div>
 
     <div class="warnchip" id="warnHint" hidden></div>
@@ -180,34 +212,7 @@ select{font-family:inherit}
     <div class="focal-bar" id="focalBar"></div>
 
     <div class="opt-bar">
-      <div class="opt">
-        <label>画幅</label>
-        <select id="selFormat">
-          <option value="ff">全画幅 36mm</option>
-          <option value="apsc">APS-C</option>
-          <option value="m43">M4/3</option>
-          <option value="mf">中画幅 44×33</option>
-          <option value="s35">Super 35</option>
-          <option value="in1">1 英寸</option>
-          <option value="f135">胶片 135</option>
-          <option value="half">半格胶片</option>
-          <option value="konica">柯尼卡 C35EF</option>
-        </select>
-      </div>
-      <div class="opt">
-        <label>宽高比</label>
-        <select id="selRatio">
-          <option value="1.5">3:2 横</option>
-          <option value="1.3333">4:3 横</option>
-          <option value="1.7778">16:9 横</option>
-          <option value="2.39">2.39:1 宽幕</option>
-          <option value="1">1:1 方</option>
-          <option value="0.6667">2:3 竖</option>
-          <option value="0.8">4:5 竖</option>
-          <option value="0.5625">9:16 竖</option>
-        </select>
-      </div>
-      <div class="opt">
+      <div class="opt" style="max-width:190px">
         <label>辅助线</label>
         <select id="selGuide">
           <option value="none">关闭</option>
@@ -219,23 +224,30 @@ select{font-family:inherit}
     </div>
 
     <div class="action-bar">
-      <button class="ico" onclick="openPicker()" title="上传照片">
-        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="8.8" cy="9.2" r="1.6"/><path d="M21 15.5l-4.6-4.3L6.5 21"/></svg>
-      </button>
+      <div class="actside">
+        <button class="ico" onclick="openPicker()" title="上传照片">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="8.8" cy="9.2" r="1.6"/><path d="M21 15.5l-4.6-4.3L6.5 21"/></svg>
+        </button>
+      </div>
 
       <button class="shutter" onclick="capture()" title="拍摄"></button>
 
-      <button class="ico" id="btnLive" onclick="toggleLive()" title="暂停/恢复">
-        <svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M5 8h14"/><path d="M5 16h14"/></svg>
-      </button>
+      <div class="actside">
+        <button class="ico" id="btnLive" onclick="toggleLive()" title="暂停/恢复">
+          <svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M5 8h14"/><path d="M5 16h14"/></svg>
+        </button>
 
-      <button class="ico" id="btnCompass" onclick="toggleCompass()" title="方向 / 指南针" hidden>
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.9 8.1l-2.4 5.4-5.4 2.4 2.4-5.4z"/></svg>
-      </button>
+        <button class="ico" onclick="openSheet()" title="设置">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1v.3a2 2 0 11-4 0v-.2a1.6 1.6 0 00-2.8-1.1l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 003.5 15a2 2 0 010-4h.2a1.6 1.6 0 001.1-2.8l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 0010.4 4.3V4a2 2 0 114 0v.2a1.6 1.6 0 002.8 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 001.1 2.7h.3a2 2 0 010 4h-.2z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
 
-      <button class="ico" onclick="openSheet()" title="设置">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1v.3a2 2 0 11-4 0v-.2a1.6 1.6 0 00-2.8-1.1l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 003.5 15a2 2 0 010-4h.2a1.6 1.6 0 001.1-2.8l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 0010.4 4.3V4a2 2 0 114 0v.2a1.6 1.6 0 002.8 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 001.1 2.7h.3a2 2 0 010 4h-.2z"/></svg>
-      </button>
+  <div class="sheet" id="pickSheet" hidden onclick="if(event.target===this)closePick()">
+    <div class="sheet-inner">
+      <h3 id="pickTitle">画幅</h3>
+      <div class="pickgrid" id="pickGrid"></div>
     </div>
   </div>
 
@@ -304,6 +316,17 @@ const FORMATS = {
 };
 
 const FOCALS = [20, 24, 28, 35, 40, 50, 70, 85, 100, 135];
+
+const RATIOS = [
+  { v: 1.5,    short: "3:2",    label: "3:2 横" },
+  { v: 1.3333, short: "4:3",    label: "4:3 横" },
+  { v: 1.7778, short: "16:9",   label: "16:9 横" },
+  { v: 2.39,   short: "2.39:1", label: "2.39:1 宽幕" },
+  { v: 1,      short: "1:1",    label: "1:1 方" },
+  { v: 0.6667, short: "2:3",    label: "2:3 竖" },
+  { v: 0.8,    short: "4:5",    label: "4:5 竖" },
+  { v: 0.5625, short: "9:16",   label: "9:16 竖" },
+];
 
 const state = {
   focal: 50,
@@ -386,11 +409,7 @@ function layoutBox() {
 
 function ratioLabel() {
   const v = state.ratio;
-  const map = [
-    [1.5, "3:2"], [1.3333, "4:3"], [1.7778, "16:9"], [2.39, "2.39:1"],
-    [1, "1:1"], [0.6667, "2:3"], [0.8, "4:5"], [0.5625, "9:16"],
-  ];
-  for (const [k, label] of map) if (Math.abs(v - k) < 0.005) return label;
+  for (const r of RATIOS) if (Math.abs(v - r.v) < 0.005) return r.short;
   return String(v);
 }
 
@@ -574,11 +593,17 @@ function stopCompass() {
 }
 
 function syncCompassUI() {
-  $("dirBox").hidden = !(compass.on && compass.hasFix);
-  const b = $("btnCompass");
-  if (b) {
-    b.hidden = !compass.supported;
-    b.classList.toggle("on", compass.on);
+  const box = $("dirBox");
+  const live = compass.on && compass.hasFix;
+  box.classList.toggle("on", live);
+  if (live) {
+    $("dirTxt").textContent = dirLabel(compass.heading);
+  } else if (compass.on) {
+    $("dirTxt").textContent = "读取中";
+  } else {
+    $("dirTxt").textContent = "方向";
+    const n = $("needle");
+    if (n) n.setAttribute("transform", "rotate(0 20 20)");
   }
   const sb = $("btnCompassSheet");
   if (sb) {
@@ -851,16 +876,47 @@ function closeResult() { $("result").hidden = true; }
 function openSheet() { $("sheet").hidden = false; }
 function closeSheet() { $("sheet").hidden = true; }
 
-$("selFormat").addEventListener("change", (e) => {
-  state.format = e.target.value;
-  syncFocalBar();
-  update();
-});
+function pickItems(kind) {
+  if (kind === "format") {
+    return Object.keys(FORMATS).map((k) => ({
+      id: k,
+      label: FORMATS[k].label,
+      sub: FORMATS[k].note,
+      on: k === state.format,
+    }));
+  }
+  return RATIOS.map((r) => ({
+    id: String(r.v),
+    label: r.label,
+    sub: "",
+    on: Math.abs(r.v - state.ratio) < 0.005,
+  }));
+}
 
-$("selRatio").addEventListener("change", (e) => {
-  state.ratio = Number(e.target.value);
-  update();
-});
+function openPick(kind) {
+  $("pickTitle").textContent = kind === "format" ? "画幅" : "宽高比";
+  const grid = $("pickGrid");
+  grid.innerHTML = "";
+  pickItems(kind).forEach((it) => {
+    const b = document.createElement("button");
+    b.className = "pickitem" + (it.on ? " on" : "");
+    b.innerHTML = it.label + (it.sub ? "<small>" + it.sub + "</small>" : "");
+    b.onclick = () => {
+      if (kind === "format") {
+        state.format = it.id;
+        syncFocalBar();
+      } else {
+        state.ratio = Number(it.id);
+      }
+      closePick();
+      update();
+    };
+    grid.appendChild(b);
+  });
+  $("pickSheet").hidden = false;
+}
+
+function closePick() { $("pickSheet").hidden = true; }
 
 $("selGuide").addEventListener("change", (e) => {
   state.guide = e.target.value;
